@@ -26,6 +26,7 @@ class AUTtoDFA<I>(fin: String) {
     }
 }
 
+//testing
 fun main(args: Array<String>) {
     val dfa : CompactDFA<String> = AUTtoDFA<String>("/testfiles/CLIENT_SERVER.aut").getDFA()
     val dfaAnswer = AutomatonBuilders.newDFA(Alphabets.fromArray("call", "service", "reply", "continue"))
