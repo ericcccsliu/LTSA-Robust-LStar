@@ -1,6 +1,5 @@
 package edu.cmu.isr.lts
 
-import de.learnlib.filter.cache.dfa.DFAHashCacheOracle
 import de.learnlib.api.oracle.MembershipOracle
 import de.learnlib.api.query.Query
 import net.automatalib.automata.fsa.impl.compact.CompactDFA
