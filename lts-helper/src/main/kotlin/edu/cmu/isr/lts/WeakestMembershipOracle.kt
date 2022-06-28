@@ -5,7 +5,7 @@ import de.learnlib.api.query.Query
 import net.automatalib.automata.fsa.impl.compact.CompactDFA
 import net.automatalib.words.Word
 
-class WeakestMembershipOracle<I, D>(machine: CompactDFA<I>, property: CompactDFA<I>) : MembershipOracle.DFAMembershipOracle<I> {
+class WeakestMembershipOracle<I>(machine: CompactDFA<I>, property: CompactDFA<I>) : MembershipOracle.DFAMembershipOracle<I> {
     private val machineLTS: CompactDetLTS<I> = machine.asLTS()
     private val propertyLTS: CompactDetLTS<I> = property.asLTS()
     val composition = parallelComposition(machineLTS, machineLTS.inputAlphabet, propertyLTS, propertyLTS.inputAlphabet)

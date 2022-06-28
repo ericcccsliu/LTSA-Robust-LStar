@@ -14,7 +14,7 @@ class WeakestEquivalenceOracle<I> (machine: CompactDFA<I>, property: CompactDFA<
         val assumptionLTS = (p0 as CompactDFA<I>).asLTS()
         val result = checkSafety(assumptionLTS, assumptionLTS.inputAlphabet, composition, composition.inputAlphabet)
         if(result.violation) {
-            //probably won't work
+            //probably won't work woo hooo
             return DefaultQuery(result.trace as Word<I>)
         }
         return null
