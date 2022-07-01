@@ -16,13 +16,18 @@ class AUTtoDFA<I>(fin: String) {
     private val autIs : InputStream = AUTtoDFA::class.java.getResourceAsStream(fin) as InputStream
     private val simpleAutomaton: SimpleAutomaton<Int, String> = AUTParser.readAutomaton(autIs).model
     private val nfa: CompactNFA<I> = simpleAutomaton as CompactNFA<I>
-    fun getDFA(): CompactDFA<I> {
+    fun getDFA(isProperty: Boolean = false): CompactDFA<I> {
         for (state in nfa.states) {
             //set all states as accepting—only initial state is accepting as default
             nfa.setAccepting(state, true)
         }
-        return NFAs.determinize(nfa, nfa.inputAlphabet, true, false);
         //partial, minimize parameters determined by trial & error :/
+        val dfa = NFAs.determinize(nfa, nfa.inputAlphabet, true, false)
+        if(isProperty) {
+            val lastState: Int = dfa.states.elementAt(dfa.states.size - 1)
+            dfa.setAccepting(lastState, false)
+        }
+        return dfa;
     }
 }
 

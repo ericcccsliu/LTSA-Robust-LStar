@@ -14,21 +14,23 @@ import net.automatalib.visualization.VisualizationHelper.NodeAttrs
 import net.automatalib.visualization.dot.DOT
 import net.automatalib.words.Alphabet
 import net.automatalib.words.Word
+import net.automatalib.words.impl.Alphabets
 import java.io.File
 import java.util.*
 
 
 //use alphabet of property union alphabet of machine
 class WeakestAssumptionLStar<I>(
+    // @TODO: include environment DFA as parameter and construct alphabet using (Em u Ep) n Ee
     machine: CompactDFA<I>, property: CompactDFA<I>, alphabet: Alphabet<I>,
     initialSuffixes: List<Word<I>>, cexHandler: ObservationTableCEXHandler<Any?, Any?>, closingStrategy: ClosingStrategy<Any?, Any?> //any bad practice
 )
         : ExtensibleLStarDFA<I> (alphabet, WeakestMembershipOracle<I>(machine, property), initialSuffixes, cexHandler, closingStrategy) {
             constructor(machine: CompactDFA<I>, property: CompactDFA<I>, alphabet: Alphabet<I>) :
                 this(machine, property, alphabet, Collections.emptyList(), ObservationTableCEXHandlers.CLASSIC_LSTAR, ClosingStrategies.CLOSE_FIRST)
-
 }
 
+//ctrl + c/v'd from an example
 private class InvalidVisualizationHelper<N, E> : VisualizationHelper<N, E> {
     private val random = Random(123)
     override fun getNodeProperties(node: N, properties: MutableMap<String, String>): Boolean {
@@ -41,27 +43,52 @@ private class InvalidVisualizationHelper<N, E> : VisualizationHelper<N, E> {
     }
 }
 
+class Experiment (sysPath: String, propertyPath: String, envPath: String) {
+    private val sysDFA : CompactDFA<String> = AUTtoDFA<String>(sysPath).getDFA()
+    private val propertyDFA : CompactDFA<String> = AUTtoDFA<String>(propertyPath).getDFA(true)
+    private val envDFA : CompactDFA<String> = AUTtoDFA<String>(envPath).getDFA()
+
+    val learningAlphabet: Alphabet<String>
+        get() = getLearningAlphabet(sysDFA, propertyDFA, envDFA)
+
+    private val lStarAlgorithm = WeakestAssumptionLStar(sysDFA, propertyDFA, learningAlphabet)
+
+    val result: CompactDFA<String>
+        get() {
+            val experiment =
+                DFAExperiment(lStarAlgorithm, WeakestEquivalenceOracle(sysDFA, propertyDFA), learningAlphabet)
+            experiment.run()
+            return experiment.finalHypothesis as CompactDFA<String>
+        }
+    private fun getLearningAlphabet(system: CompactDFA<String>, property: CompactDFA<String>, environment: CompactDFA<String>) : Alphabet<String> {
+        val systemSet = HashSet(system.inputAlphabet)
+        val propertySet = HashSet(property.inputAlphabet)
+        val environmentSet = HashSet(environment.inputAlphabet)
+        systemSet.addAll(propertySet)
+        environmentSet.retainAll(systemSet)
+        return Alphabets.fromCollection(environmentSet)
+    }
+}
+
 
 //time to break things
 fun main() {
-    val abpSysDFA : CompactDFA<String> = AUTtoDFA<String>("/testfiles/ABP_SYS.aut").getDFA()
-    val abpPropertyDFA : CompactDFA<String> = AUTtoDFA<String>("/testfiles/ABP_PROPERTY.aut").getDFA()
-    val lStarAlgorithm = WeakestAssumptionLStar(abpSysDFA, abpPropertyDFA, abpSysDFA.inputAlphabet)
-    val experiment = DFAExperiment(lStarAlgorithm, WeakestEquivalenceOracle(abpSysDFA, abpPropertyDFA), abpSysDFA.inputAlphabet)
-    experiment.run()
-    val finalHyp: CompactDFA<String> = experiment.finalHypothesis as CompactDFA<String>
-
-    val dotFile: File = File("automaton.dot")
-    val dotOutputFile: File = File("automaton-as-png.png")
-    dotFile.createNewFile()
-    dotOutputFile.createNewFile()
-
-    GraphDOT.write(
-        finalHyp,
-        finalHyp.inputAlphabet,
-        IOUtil.asBufferedUTF8Writer(dotFile),
-        InvalidVisualizationHelper()
-    )
-    DOT.runDOT(dotFile, "png", dotOutputFile)
+//    val abpSysDFA : CompactDFA<String> = AUTtoDFA<String>("/testfiles/ABP_SYS.aut").getDFA()
+//    val abpPropertyDFA : CompactDFA<String> = AUTtoDFA<String>("/testfiles/ABP_PROPERTY.aut").getDFA(true)
+//    val lStarAlgorithm = WeakestAssumptionLStar(abpSysDFA, abpPropertyDFA, abpSysDFA.inputAlphabet)
+//
+//
+//    val dotFile = File("automaton.dot")
+//    val dotOutputFile = File("automaton-as-png.png")
+//    dotFile.createNewFile()
+//    dotOutputFile.createNewFile()
+//
+//    GraphDOT.write(
+//        finalHyp,
+//        finalHyp.inputAlphabet,
+//        IOUtil.asBufferedUTF8Writer(dotFile),
+//        InvalidVisualizationHelper()
+//    )
+//    DOT.runDOT(dotFile, "png", dotOutputFile)
 
 }
