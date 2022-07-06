@@ -7,9 +7,13 @@ import de.learnlib.algorithms.lstar.closing.ClosingStrategy
 import de.learnlib.algorithms.lstar.dfa.ExtensibleLStarDFA
 import de.learnlib.util.Experiment.DFAExperiment
 import net.automatalib.automata.fsa.impl.compact.CompactDFA
+import net.automatalib.automata.fsa.impl.compact.CompactNFA
 import net.automatalib.automata.simple.SimpleDeterministicAutomaton
 import net.automatalib.commons.util.IOUtil
 import net.automatalib.serialization.dot.GraphDOT
+import net.automatalib.util.ts.copy.TSCopy
+import net.automatalib.util.ts.traversal.TSTraversal
+import net.automatalib.util.ts.traversal.TSTraversalMethod
 import net.automatalib.visualization.VisualizationHelper
 import net.automatalib.visualization.VisualizationHelper.NodeAttrs
 import net.automatalib.visualization.dot.DOT
@@ -44,12 +48,14 @@ class Experiment (sysPath: String, propertyPath: String, envPath: String) {
     private val propertyLTS: CompactDetLTS<String> = propertyDFA.asLTS()
     val composition: CompactDetLTS<String> = parallelComposition(sysLTS, sysLTS.inputAlphabet, propertyLTS, propertyLTS.inputAlphabet)
 
+    //maps end state to map of transition, initial state
+    private val backtrackingMap = HashMap<Int, HashMap<String, Int>>()
+
     //iterate over composition, add new error states to list
     //copy composition DFA over to composition NFA, condensing error states into one
     //@TODO: consider where to process changed transitions
+    //@TODO: check to make sure this doesn't get stuck in a self-loop
     init {
-        //maps end state to map of transition, initial state
-        val backtrackingMap = HashMap<Int, HashMap<String, Int>>()
         for(state in composition.states) {
             for(input in composition.inputAlphabet) {
                 if(composition.getSuccessor(state, input) != SimpleDeterministicAutomaton.IntAbstraction.INVALID_STATE) {
@@ -75,9 +81,47 @@ class Experiment (sysPath: String, propertyPath: String, envPath: String) {
             return experiment.finalHypothesis as CompactDFA<String>
         }
 
-//    private fun pruneErrorState(composition: CompactDetLTS<String>) {
-//
-//    }
+    private fun pruneErrorState(composition: CompactDetLTS<String>): CompactNonDetLTS<String> {
+        //bfs tau error state backtracking
+        val errorStates = HashSet<Int>()
+        val nextStates = ArrayDeque<Int>()
+        //keep track of the initial error state so we have something for all the backtracked error states to condense into
+        val initialErrorState = composition.errorState
+        nextStates.add(composition.errorState)
+        while(nextStates.isNotEmpty()) {
+            val currentState = nextStates.first()
+            nextStates.removeFirst()
+            //skip iteration if this state has already been seen
+            if(errorStates.contains(currentState)) {
+                continue
+            }
+            val incomingTransitions = backtrackingMap[currentState]
+            if(incomingTransitions != null) {
+                val tauTransitions = incomingTransitions.filterKeys {
+                    tauAlphabet.contains(it)
+                }
+                tauTransitions.forEach {
+                    nextStates.addLast(it.value)
+                }
+            }
+            errorStates.add(currentState)
+        }
+
+        //condense error states by constructing CompactNonDetLTS
+        val prunedNFA = CompactNFA<String>(composition.inputAlphabet)
+        TSCopy.copy(TSTraversalMethod.BREADTH_FIRST, composition, TSTraversal.NO_LIMIT, composition.inputAlphabet, prunedNFA)
+        for(state in errorStates) {
+            if(state == initialErrorState) {
+                continue
+            }
+            prunedNFA.removeAllTransitions(state)
+            val incomingTransitions = backtrackingMap[state]
+            incomingTransitions?.forEach {
+                prunedNFA.addTransition(it.value, it.key, initialErrorState)
+            }
+        }
+        return prunedNFA.asLTS()
+    }
     private fun getLearningAlphabet(system: CompactDFA<String>, property: CompactDFA<String>, environment: CompactDFA<String>) : Alphabet<String> {
         val systemSet = HashSet(system.inputAlphabet)
         val propertySet = HashSet(property.inputAlphabet)
