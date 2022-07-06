@@ -7,6 +7,7 @@ import de.learnlib.algorithms.lstar.closing.ClosingStrategy
 import de.learnlib.algorithms.lstar.dfa.ExtensibleLStarDFA
 import de.learnlib.util.Experiment.DFAExperiment
 import net.automatalib.automata.fsa.impl.compact.CompactDFA
+import net.automatalib.automata.simple.SimpleDeterministicAutomaton
 import net.automatalib.commons.util.IOUtil
 import net.automatalib.serialization.dot.GraphDOT
 import net.automatalib.visualization.VisualizationHelper
@@ -21,13 +22,79 @@ import java.util.*
 
 //use alphabet of property union alphabet of machine
 class WeakestAssumptionLStar<I>(
-    // @TODO: include environment DFA as parameter and construct alphabet using (Em u Ep) n Ee
     machine: CompactDFA<I>, property: CompactDFA<I>, alphabet: Alphabet<I>,
     initialSuffixes: List<Word<I>>, cexHandler: ObservationTableCEXHandler<Any?, Any?>, closingStrategy: ClosingStrategy<Any?, Any?> //any bad practice
 )
         : ExtensibleLStarDFA<I> (alphabet, WeakestMembershipOracle<I>(machine, property), initialSuffixes, cexHandler, closingStrategy) {
             constructor(machine: CompactDFA<I>, property: CompactDFA<I>, alphabet: Alphabet<I>) :
                 this(machine, property, alphabet, Collections.emptyList(), ObservationTableCEXHandlers.CLASSIC_LSTAR, ClosingStrategies.CLOSE_FIRST)
+}
+class Experiment (sysPath: String, propertyPath: String, envPath: String) {
+    private val sysDFA : CompactDFA<String> = AUTtoDFA<String>(sysPath).getDFA()
+    private val propertyDFA : CompactDFA<String> = AUTtoDFA<String>(propertyPath).getDFA(true)
+    private val envDFA : CompactDFA<String> = AUTtoDFA<String>(envPath).getDFA()
+
+    val learningAlphabet: Alphabet<String>
+        get() = getLearningAlphabet(sysDFA, propertyDFA, envDFA)
+
+    private val tauAlphabet: Alphabet<String>
+        get() = getTauAlphabet(sysDFA, propertyDFA, envDFA)
+
+    private val sysLTS: CompactDetLTS<String> = sysDFA.asLTS()
+    private val propertyLTS: CompactDetLTS<String> = propertyDFA.asLTS()
+    val composition: CompactDetLTS<String> = parallelComposition(sysLTS, sysLTS.inputAlphabet, propertyLTS, propertyLTS.inputAlphabet)
+
+    //iterate over composition, add new error states to list
+    //copy composition DFA over to composition NFA, condensing error states into one
+    //@TODO: consider where to process changed transitions
+    init {
+        //maps end state to map of transition, initial state
+        val backtrackingMap = HashMap<Int, HashMap<String, Int>>()
+        for(state in composition.states) {
+            for(input in composition.inputAlphabet) {
+                if(composition.getSuccessor(state, input) != SimpleDeterministicAutomaton.IntAbstraction.INVALID_STATE) {
+                    val endState: Int = composition.getSuccessor(state, input)
+                    if(backtrackingMap.contains(endState)){
+                        backtrackingMap[endState]?.put(input, state)
+                    } else {
+                        backtrackingMap[endState] = HashMap()
+                        backtrackingMap[endState]?.put(input, state)
+                    }
+                }
+            }
+        }
+    }
+
+    private val lStarAlgorithm = WeakestAssumptionLStar(sysDFA, propertyDFA, learningAlphabet)
+
+    val result: CompactDFA<String>
+        get() {
+            val experiment =
+                DFAExperiment(lStarAlgorithm, WeakestEquivalenceOracle(sysDFA, propertyDFA), learningAlphabet)
+            experiment.run()
+            return experiment.finalHypothesis as CompactDFA<String>
+        }
+
+//    private fun pruneErrorState(composition: CompactDetLTS<String>) {
+//
+//    }
+    private fun getLearningAlphabet(system: CompactDFA<String>, property: CompactDFA<String>, environment: CompactDFA<String>) : Alphabet<String> {
+        val systemSet = HashSet(system.inputAlphabet)
+        val propertySet = HashSet(property.inputAlphabet)
+        val environmentSet = HashSet(environment.inputAlphabet)
+        systemSet.addAll(propertySet)
+        environmentSet.retainAll(systemSet)
+        return Alphabets.fromCollection(environmentSet)
+    }
+
+    private fun getTauAlphabet(system: CompactDFA<String>, property: CompactDFA<String>, environment: CompactDFA<String>): Alphabet<String> {
+        val systemSet = HashSet(system.inputAlphabet)
+        val propertySet = HashSet(property.inputAlphabet)
+        val environmentSet = HashSet(environment.inputAlphabet)
+        systemSet.addAll(propertySet)
+        systemSet.removeAll(environmentSet)
+        return Alphabets.fromCollection(systemSet)
+    }
 }
 
 //ctrl + c/v'd from an example
@@ -42,32 +109,19 @@ private class InvalidVisualizationHelper<N, E> : VisualizationHelper<N, E> {
         return true
     }
 }
+fun DrawAutomaton(automaton: CompactDFA<String>) {
+    val dotFile = File("automaton.dot")
+    val dotOutputFile = File("automaton-as-png.png")
+    dotFile.createNewFile()
+    dotOutputFile.createNewFile()
 
-class Experiment (sysPath: String, propertyPath: String, envPath: String) {
-    private val sysDFA : CompactDFA<String> = AUTtoDFA<String>(sysPath).getDFA()
-    private val propertyDFA : CompactDFA<String> = AUTtoDFA<String>(propertyPath).getDFA(true)
-    private val envDFA : CompactDFA<String> = AUTtoDFA<String>(envPath).getDFA()
-
-    val learningAlphabet: Alphabet<String>
-        get() = getLearningAlphabet(sysDFA, propertyDFA, envDFA)
-
-    private val lStarAlgorithm = WeakestAssumptionLStar(sysDFA, propertyDFA, learningAlphabet)
-
-    val result: CompactDFA<String>
-        get() {
-            val experiment =
-                DFAExperiment(lStarAlgorithm, WeakestEquivalenceOracle(sysDFA, propertyDFA), learningAlphabet)
-            experiment.run()
-            return experiment.finalHypothesis as CompactDFA<String>
-        }
-    private fun getLearningAlphabet(system: CompactDFA<String>, property: CompactDFA<String>, environment: CompactDFA<String>) : Alphabet<String> {
-        val systemSet = HashSet(system.inputAlphabet)
-        val propertySet = HashSet(property.inputAlphabet)
-        val environmentSet = HashSet(environment.inputAlphabet)
-        systemSet.addAll(propertySet)
-        environmentSet.retainAll(systemSet)
-        return Alphabets.fromCollection(environmentSet)
-    }
+    GraphDOT.write(
+        automaton,
+        automaton.inputAlphabet,
+        IOUtil.asBufferedUTF8Writer(dotFile),
+        InvalidVisualizationHelper()
+    )
+    DOT.runDOT(dotFile, "png", dotOutputFile)
 }
 
 
@@ -78,17 +132,4 @@ fun main() {
 //    val lStarAlgorithm = WeakestAssumptionLStar(abpSysDFA, abpPropertyDFA, abpSysDFA.inputAlphabet)
 //
 //
-//    val dotFile = File("automaton.dot")
-//    val dotOutputFile = File("automaton-as-png.png")
-//    dotFile.createNewFile()
-//    dotOutputFile.createNewFile()
-//
-//    GraphDOT.write(
-//        finalHyp,
-//        finalHyp.inputAlphabet,
-//        IOUtil.asBufferedUTF8Writer(dotFile),
-//        InvalidVisualizationHelper()
-//    )
-//    DOT.runDOT(dotFile, "png", dotOutputFile)
-
 }

@@ -3,13 +3,13 @@ package edu.cmu.isr.lts
 import de.learnlib.api.oracle.MembershipOracle
 import de.learnlib.api.query.Query
 import net.automatalib.automata.fsa.impl.compact.CompactDFA
+import net.automatalib.automata.simple.SimpleDeterministicAutomaton
 import net.automatalib.words.Word
 
 class WeakestMembershipOracle<I>(machine: CompactDFA<I>, property: CompactDFA<I>) : MembershipOracle.DFAMembershipOracle<I> {
     private val machineLTS: CompactDetLTS<I> = machine.asLTS()
     private val propertyLTS: CompactDetLTS<I> = property.asLTS()
     val composition = parallelComposition(machineLTS, machineLTS.inputAlphabet, propertyLTS, propertyLTS.inputAlphabet)
-
     override fun processQueries(p0: MutableCollection<out Query<I, Boolean>>?) {
         if (p0 != null) {
             for(query: Query<I, Boolean> in p0) {

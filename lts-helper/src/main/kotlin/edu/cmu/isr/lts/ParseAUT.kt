@@ -23,6 +23,7 @@ class AUTtoDFA<I>(fin: String) {
         }
         //partial, minimize parameters determined by trial & error :/
         val dfa = NFAs.determinize(nfa, nfa.inputAlphabet, true, false)
+        //error state is the only state that is not accepting
         if(isProperty) {
             val lastState: Int = dfa.states.elementAt(dfa.states.size - 1)
             dfa.setAccepting(lastState, false)
