@@ -1,6 +1,6 @@
 package edu.cmu.isr.lts
 
-import net.automatalib.automata.fsa.impl.compact.CompactDFA
+import net.automatalib.automata.fsa.impl.compact.CompactNFA
 import net.automatalib.serialization.aut.AUTWriter
 import net.automatalib.util.automata.builders.AutomatonBuilders
 import net.automatalib.util.ts.copy.TSCopy
@@ -102,18 +102,18 @@ class LTSParallelComposition<S1, S2, I, T1, T2, A1, A2>(
 
 
 fun <I> parallelComposition(lts1: LTS<*, I, *>, inputs1: Alphabet<I>,
-                            lts2: LTS<*, I, *>, inputs2: Alphabet<I>): CompactDetLTS<I> {
+                            lts2: LTS<*, I, *>, inputs2: Alphabet<I>): CompactNonDetLTS<I> {
   val inputs = Alphabets.fromCollection(inputs1.union(inputs2))
-  val out = CompactDFA(inputs)
+  val out = CompactNFA(inputs)
   val composition = LTSParallelComposition(lts1, inputs1, lts2, inputs2)
 
   TSCopy.copy(TSTraversalMethod.BREADTH_FIRST, composition, TSTraversal.NO_LIMIT, inputs, out)
-  return out.asLTS()
+  return CompactNonDetLTS(out)
 }
 
 
 fun main() {
-  val a = AutomatonBuilders.newDFA(Alphabets.fromArray('a', 'b', 'c'))
+  val a = CompactDetLTS(AutomatonBuilders.newDFA(Alphabets.fromArray('a', 'b', 'c'))
     .withInitial(0)
     .from(0).on('a').to(1)
     .from(1)
@@ -121,18 +121,17 @@ fun main() {
       .on('c').to(2)
     .from(2).on('b').to(0)
     .withAccepting(0, 1, 2)
-    .create()
-    .asLTS()
+    .create())
 
-  val b = AutomatonBuilders.newDFA(Alphabets.fromArray('a', 'b', 'c'))
+
+  val b = CompactDetLTS(AutomatonBuilders.newDFA(Alphabets.fromArray('a', 'b', 'c'))
     .withInitial(0)
     .from(0).on('a').to(1)
     .from(1)
       .on('b').to(-1)
       .on('c').to(-1)
     .withAccepting(0, 1)
-    .create()
-    .asLTS()
+    .create())
 
   val c = parallelComposition(a, a.inputAlphabet, b, b.inputAlphabet)
 

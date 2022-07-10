@@ -35,6 +35,6 @@ class CompactDetLTS<I>(dfa: CompactDFA<I>) : CompactDFA<I>(dfa), MutableDetLTS<I
 
 }
 
-fun <I> CompactDFA<I>.asLTS(): CompactDetLTS<I> {
-  return CompactDetLTS(this)
-}
+//fun <I> CompactDFA<I>.asLTS(): CompactDetLTS<I> {
+//  return CompactDetLTS(this)
+//}

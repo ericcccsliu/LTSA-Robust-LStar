@@ -42,6 +42,6 @@ class CompactNonDetLTS<I>(nfa: CompactNFA<I>) : CompactNFA<I>(nfa), NonDetLTS<In
 
 }
 
-fun <I> CompactNFA<I>.asLTS(): CompactNonDetLTS<I> {
-    return CompactNonDetLTS(this)
-}
+//fun <I> CompactNFA<I>.asLTS(): CompactNonDetLTS<I> {
+//    return CompactNonDetLTS(this)
+//}

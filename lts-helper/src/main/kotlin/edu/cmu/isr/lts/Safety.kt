@@ -58,7 +58,7 @@ class SafetyVisitor<S, I, T>(private val lts: LTS<S, I, T>,
 }
 
 fun <I> checkSafety(lts: LTS<*, I, *>, inputs1: Alphabet<I>,
-                    prop: DetLTS<*, I, *>, inputs2: Alphabet<I>): SafetyResult<I>
+                    prop: LTS<*, I, *>, inputs2: Alphabet<I>): SafetyResult<I>
 {
   val c = parallelComposition(lts, inputs1, prop, inputs2)
   val result = SafetyResult<I>()
@@ -81,15 +81,15 @@ fun <S, I> makeErrorState(prop: MutableDetLTS<S, I, *>, inputs: Alphabet<I>): Mu
 }
 
 fun main() {
-  val p = AutomatonBuilders.newDFA(Alphabets.fromArray('a', 'b'))
+  val p = CompactDetLTS(AutomatonBuilders.newDFA(Alphabets.fromArray('a', 'b'))
     .withInitial(0)
     .from(0).on('a').to(1)
     .from(1).on('b').to(0)
     .withAccepting(0, 1)
-    .create()
-    .asLTS()
+    .create())
 
-  val a = AutomatonBuilders.newDFA(Alphabets.characters('a', 'c'))
+
+  val a = CompactDetLTS(AutomatonBuilders.newDFA(Alphabets.characters('a', 'c'))
     .withInitial(0)
     .from(0).on('a').to(1)
     .from(1)
@@ -97,8 +97,7 @@ fun main() {
       .on('a').to(1)
     .from(2).on('c').to(0)
     .withAccepting(0, 1, 2)
-    .create()
-    .asLTS()
+    .create())
 
   AUTWriter.writeAutomaton(p, p.inputAlphabet, System.out)
 

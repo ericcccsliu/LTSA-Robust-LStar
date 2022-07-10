@@ -9,7 +9,7 @@ import net.automatalib.util.ts.traversal.TSTraversalVisitor
 import net.automatalib.words.Alphabet
 import net.automatalib.words.impl.Alphabets
 
-
+//@TODO: Refactor for nondeterminism
 class DeadlockResult<I> {
   var violation: Boolean = false
   var trace: List<I>? = null
@@ -75,31 +75,29 @@ fun <S, I, T> checkDeadlock(lts: DetLTS<S, I, T>, inputs: Alphabet<I>): Deadlock
 }
 
 fun main() {
-  val p = AutomatonBuilders.newDFA(Alphabets.fromArray('a', 'b'))
-    .withInitial(0)
-    .from(0).on('a').to(1)
-    .from(1).on('b').to(0)
-    .withAccepting(0, 1)
-    .create()
-    .asLTS()
-
-  val a = AutomatonBuilders.newDFA(Alphabets.characters('a', 'c'))
-    .withInitial(0)
-    .from(0).on('a').to(1)
-    .from(1)
-    .on('b').to(2)
-    .on('a').to(1)
-    .from(2).on('c').to(3)
-    .withAccepting(0, 1, 2, 3)
-    .create()
-    .asLTS()
-
-  AUTWriter.writeAutomaton(p, p.inputAlphabet, System.out)
-
-  val p_err = makeErrorState(p, p.inputAlphabet)
-  AUTWriter.writeAutomaton(p_err, p.inputAlphabet, System.out)
-
-  val c = parallelComposition(a, a.inputAlphabet, p_err, p.inputAlphabet)
-
-  println(checkDeadlock(c, c.inputAlphabet))
+//  val p = CompactDetLTS(AutomatonBuilders.newDFA(Alphabets.fromArray('a', 'b'))
+//    .withInitial(0)
+//    .from(0).on('a').to(1)
+//    .from(1).on('b').to(0)
+//    .withAccepting(0, 1)
+//    .create())
+//
+//  val a = CompactDetLTS(AutomatonBuilders.newDFA(Alphabets.characters('a', 'c'))
+//    .withInitial(0)
+//    .from(0).on('a').to(1)
+//    .from(1)
+//    .on('b').to(2)
+//    .on('a').to(1)
+//    .from(2).on('c').to(3)
+//    .withAccepting(0, 1, 2, 3)
+//    .create())
+//
+//  AUTWriter.writeAutomaton(p, p.inputAlphabet, System.out)
+//
+//  val p_err = makeErrorState(p, p.inputAlphabet)
+//  AUTWriter.writeAutomaton(p_err, p.inputAlphabet, System.out)
+//
+//  val c = parallelComposition(a, a.inputAlphabet, p_err, p.inputAlphabet)
+//
+//  println(checkDeadlock(c, c.inputAlphabet))
 }

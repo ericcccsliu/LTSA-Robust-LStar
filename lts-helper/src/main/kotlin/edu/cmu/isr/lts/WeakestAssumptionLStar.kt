@@ -8,7 +8,6 @@ import de.learnlib.algorithms.lstar.dfa.ExtensibleLStarDFA
 import de.learnlib.util.Experiment.DFAExperiment
 import net.automatalib.automata.fsa.impl.compact.CompactDFA
 import net.automatalib.automata.fsa.impl.compact.CompactNFA
-import net.automatalib.automata.simple.SimpleDeterministicAutomaton
 import net.automatalib.commons.util.IOUtil
 import net.automatalib.serialization.dot.GraphDOT
 import net.automatalib.util.ts.copy.TSCopy
@@ -26,27 +25,28 @@ import java.util.*
 
 //use alphabet of property union alphabet of machine
 class WeakestAssumptionLStar<I>(
-    learningTarget: CompactNonDetLTS<I>, alphabet: Alphabet<I>, system: CompactDetLTS<I>,
+    learningTarget: CompactNonDetLTS<I>, alphabet: Alphabet<I>, system: CompactNonDetLTS<I>,
     initialSuffixes: List<Word<I>>, cexHandler: ObservationTableCEXHandler<Any?, Any?>, closingStrategy: ClosingStrategy<Any?, Any?> //any bad practice
 )
         : ExtensibleLStarDFA<I> (alphabet, WeakestMembershipOracle<I>(learningTarget, system), initialSuffixes, cexHandler, closingStrategy) {
-            constructor(learningTarget: CompactNonDetLTS<I>, system: CompactDetLTS<I>, alphabet: Alphabet<I>) :
+            constructor(learningTarget: CompactNonDetLTS<I>, system: CompactNonDetLTS<I>, alphabet: Alphabet<I>) :
                 this(learningTarget, alphabet, system, Collections.emptyList(), ObservationTableCEXHandlers.CLASSIC_LSTAR, ClosingStrategies.CLOSE_FIRST)
 }
 class Experiment (sysPath: String, propertyPath: String, envPath: String) {
-    private val sysDFA : CompactDFA<String> = AUTtoDFA<String>(sysPath).getDFA()
+    //@TODO: finish refactor for nondeterministic system
+    private val sysNFA : CompactNFA<String> = AUTtoDFA<String>(sysPath).getNFA()
     private val propertyDFA : CompactDFA<String> = AUTtoDFA<String>(propertyPath).getDFA(true)
-    private val envDFA : CompactDFA<String> = AUTtoDFA<String>(envPath).getDFA()
+    private val envNFA : CompactNFA<String> = AUTtoDFA<String>(envPath).getNFA()
 
     private val learningAlphabet: Alphabet<String>
-        get() = getLearningAlphabet(sysDFA, propertyDFA, envDFA)
+        get() = getLearningAlphabet(sysNFA, propertyDFA, envNFA)
 
     private val tauAlphabet: Alphabet<String>
-        get() = getTauAlphabet(sysDFA, propertyDFA, envDFA)
+        get() = getTauAlphabet(sysNFA, propertyDFA, envNFA)
 
-    private val sysLTS: CompactDetLTS<String> = sysDFA.asLTS()
-    private val propertyLTS: CompactDetLTS<String> = propertyDFA.asLTS()
-    val composition: CompactDetLTS<String> = parallelComposition(sysLTS, sysLTS.inputAlphabet, propertyLTS, propertyLTS.inputAlphabet)
+    private val sysLTS: CompactNonDetLTS<String> = CompactNonDetLTS(sysNFA)
+    private val propertyLTS: CompactDetLTS<String> = CompactDetLTS(propertyDFA)
+    val composition = parallelComposition(sysLTS, sysLTS.inputAlphabet, propertyLTS, propertyLTS.inputAlphabet)
 
     //maps end state to map of transition, initial state
     private val backtrackingMap = HashMap<Int, HashMap<String, Int>>()
@@ -58,15 +58,14 @@ class Experiment (sysPath: String, propertyPath: String, envPath: String) {
     init {
         for(state in composition.states) {
             for(input in composition.inputAlphabet) {
-                if(composition.getSuccessor(state, input) != SimpleDeterministicAutomaton.IntAbstraction.INVALID_STATE) {
-                    val endState: Int = composition.getSuccessor(state, input)
-                    if(backtrackingMap.contains(endState)){
+                  for(endState in composition.getSuccessors(state, input)) {
+                      if(backtrackingMap.contains(endState)){
                         backtrackingMap[endState]?.put(input, state)
-                    } else {
-                        backtrackingMap[endState] = HashMap()
-                        backtrackingMap[endState]?.put(input, state)
-                    }
-                }
+                        } else {
+                            backtrackingMap[endState] = HashMap()
+                            backtrackingMap[endState]?.put(input, state)
+                        }
+                  }
             }
         }
     }
@@ -78,12 +77,12 @@ class Experiment (sysPath: String, propertyPath: String, envPath: String) {
     val result: CompactDFA<String>
         get() {
             val experiment =
-                DFAExperiment(lStarAlgorithm, WeakestEquivalenceOracle(sysDFA, propertyDFA), learningAlphabet)
+                DFAExperiment(lStarAlgorithm, WeakestEquivalenceOracle(sysLTS, propertyLTS), learningAlphabet)
             experiment.run()
             return experiment.finalHypothesis as CompactDFA<String>
         }
 
-    private fun pruneErrorState(composition: CompactDetLTS<String>): CompactNonDetLTS<String> {
+    private fun pruneErrorState(composition: CompactNonDetLTS<String>): CompactNonDetLTS<String> {
         //bfs tau error state backtracking
         val errorStates = HashSet<Int>()
         val nextStates = ArrayDeque<Int>()
@@ -124,9 +123,9 @@ class Experiment (sysPath: String, propertyPath: String, envPath: String) {
                 prunedNFA.addTransition(it.value, it.key, initialErrorState)
             }
         }
-        return prunedNFA.asLTS()
+        return CompactNonDetLTS(prunedNFA)
     }
-    private fun getLearningAlphabet(system: CompactDFA<String>, property: CompactDFA<String>, environment: CompactDFA<String>) : Alphabet<String> {
+    private fun getLearningAlphabet(system: CompactNFA<String>, property: CompactDFA<String>, environment: CompactNFA<String>) : Alphabet<String> {
         val systemSet = HashSet(system.inputAlphabet)
         val propertySet = HashSet(property.inputAlphabet)
         val environmentSet = HashSet(environment.inputAlphabet)
@@ -135,7 +134,7 @@ class Experiment (sysPath: String, propertyPath: String, envPath: String) {
         return Alphabets.fromCollection(environmentSet)
     }
 
-    private fun getTauAlphabet(system: CompactDFA<String>, property: CompactDFA<String>, environment: CompactDFA<String>): Alphabet<String> {
+    private fun getTauAlphabet(system: CompactNFA<String>, property: CompactDFA<String>, environment: CompactNFA<String>): Alphabet<String> {
         val systemSet = HashSet(system.inputAlphabet)
         val propertySet = HashSet(property.inputAlphabet)
         val environmentSet = HashSet(environment.inputAlphabet)

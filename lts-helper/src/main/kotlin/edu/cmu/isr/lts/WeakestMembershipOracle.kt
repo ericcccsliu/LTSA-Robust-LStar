@@ -7,7 +7,7 @@ import net.automatalib.automata.simple.SimpleDeterministicAutomaton
 import net.automatalib.words.Word
 import net.automatalib.words.impl.Alphabets
 
-class WeakestMembershipOracle<I>(private val learningTarget: CompactNonDetLTS<I>, private val system: CompactDetLTS<I>) : MembershipOracle.DFAMembershipOracle<I> {
+class WeakestMembershipOracle<I>(private val learningTarget: CompactNonDetLTS<I>, private val system: CompactNonDetLTS<I>) : MembershipOracle.DFAMembershipOracle<I> {
     override fun processQueries(p0: MutableCollection<out Query<I, Boolean>>?) {
         if (p0 != null) {
             for(query: Query<I, Boolean> in p0) {
@@ -26,14 +26,12 @@ class WeakestMembershipOracle<I>(private val learningTarget: CompactNonDetLTS<I>
                 inputAutomaton.addTransition(index, symbol, index + 1)
             }
 
-            val result: SafetyResult<I> = checkSafety(inputAutomaton.asLTS(), Alphabets.fromList(input.asList()), learningTarget, learningTarget.inputAlphabet)
-
-//            //@TODO: add check to make sure input does not lead to error state
-//            if (learningTarget.accepts(input)) {
-//                query.answer(true)
-//            } else {
-//                query.answer(false)
-//            }
+            val result: SafetyResult<I> = checkSafety(CompactDetLTS(inputAutomaton), Alphabets.fromList(input.asList()), learningTarget, learningTarget.inputAlphabet)
+            if(result.violation) {
+                query.answer(false)
+            } else {
+                query.answer(true)
+            }
         }
     }
 
