@@ -5,16 +5,10 @@ import net.automatalib.automata.fsa.impl.compact.CompactDFA
 import net.automatalib.ts.UniversalDTS
 
 
-interface DetLTS<S, I, T> : UniversalDTS<S, I, T, Boolean, Void?> {
-
-  val errorState: S
-
-  fun isErrorState(state: S): Boolean
-
-}
+interface DetLTS<S, I, T> : LTS<S, I, T>, UniversalDTS<S, I, T, Boolean, Void>
 
 
-interface MutableDetLTS<S, I, T> : DetLTS<S, I, T>, MutableDeterministic<S, I, T, Boolean, Void?>
+interface MutableDetLTS<S, I, T> : DetLTS<S, I, T>, MutableDeterministic<S, I, T, Boolean, Void>
 
 
 class CompactDetLTS<I>(dfa: CompactDFA<I>) : CompactDFA<I>(dfa), MutableDetLTS<Int, I, Int> {

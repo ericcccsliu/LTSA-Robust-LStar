@@ -26,19 +26,19 @@ import java.util.*
 
 //use alphabet of property union alphabet of machine
 class WeakestAssumptionLStar<I>(
-    machine: CompactDFA<I>, property: CompactDFA<I>, alphabet: Alphabet<I>,
+    learningTarget: CompactNonDetLTS<I>, alphabet: Alphabet<I>, system: CompactDetLTS<I>,
     initialSuffixes: List<Word<I>>, cexHandler: ObservationTableCEXHandler<Any?, Any?>, closingStrategy: ClosingStrategy<Any?, Any?> //any bad practice
 )
-        : ExtensibleLStarDFA<I> (alphabet, WeakestMembershipOracle<I>(machine, property), initialSuffixes, cexHandler, closingStrategy) {
-            constructor(machine: CompactDFA<I>, property: CompactDFA<I>, alphabet: Alphabet<I>) :
-                this(machine, property, alphabet, Collections.emptyList(), ObservationTableCEXHandlers.CLASSIC_LSTAR, ClosingStrategies.CLOSE_FIRST)
+        : ExtensibleLStarDFA<I> (alphabet, WeakestMembershipOracle<I>(learningTarget, system), initialSuffixes, cexHandler, closingStrategy) {
+            constructor(learningTarget: CompactNonDetLTS<I>, system: CompactDetLTS<I>, alphabet: Alphabet<I>) :
+                this(learningTarget, alphabet, system, Collections.emptyList(), ObservationTableCEXHandlers.CLASSIC_LSTAR, ClosingStrategies.CLOSE_FIRST)
 }
 class Experiment (sysPath: String, propertyPath: String, envPath: String) {
     private val sysDFA : CompactDFA<String> = AUTtoDFA<String>(sysPath).getDFA()
     private val propertyDFA : CompactDFA<String> = AUTtoDFA<String>(propertyPath).getDFA(true)
     private val envDFA : CompactDFA<String> = AUTtoDFA<String>(envPath).getDFA()
 
-    val learningAlphabet: Alphabet<String>
+    private val learningAlphabet: Alphabet<String>
         get() = getLearningAlphabet(sysDFA, propertyDFA, envDFA)
 
     private val tauAlphabet: Alphabet<String>
@@ -71,7 +71,9 @@ class Experiment (sysPath: String, propertyPath: String, envPath: String) {
         }
     }
 
-    private val lStarAlgorithm = WeakestAssumptionLStar(sysDFA, propertyDFA, learningAlphabet)
+    private val targetNFA = pruneErrorState(composition)
+
+    private val lStarAlgorithm = WeakestAssumptionLStar(targetNFA, sysLTS, learningAlphabet)
 
     val result: CompactDFA<String>
         get() {
@@ -111,9 +113,11 @@ class Experiment (sysPath: String, propertyPath: String, envPath: String) {
         val prunedNFA = CompactNFA<String>(composition.inputAlphabet)
         TSCopy.copy(TSTraversalMethod.BREADTH_FIRST, composition, TSTraversal.NO_LIMIT, composition.inputAlphabet, prunedNFA)
         for(state in errorStates) {
+            //ignore initial error state because everything else condenses into it
             if(state == initialErrorState) {
                 continue
             }
+            //@TODO: remove state??? rn just removing all the transitions from it—does that do the same thing???? idk
             prunedNFA.removeAllTransitions(state)
             val incomingTransitions = backtrackingMap[state]
             incomingTransitions?.forEach {
@@ -169,11 +173,10 @@ fun DrawAutomaton(automaton: CompactDFA<String>) {
 }
 
 
-//time to break things
+//time to break things :)
 fun main() {
 //    val abpSysDFA : CompactDFA<String> = AUTtoDFA<String>("/testfiles/ABP_SYS.aut").getDFA()
 //    val abpPropertyDFA : CompactDFA<String> = AUTtoDFA<String>("/testfiles/ABP_PROPERTY.aut").getDFA(true)
 //    val lStarAlgorithm = WeakestAssumptionLStar(abpSysDFA, abpPropertyDFA, abpSysDFA.inputAlphabet)
-//
 //
 }

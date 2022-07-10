@@ -2,18 +2,15 @@ package edu.cmu.isr.lts
 
 import net.automatalib.automata.MutableAutomaton
 import net.automatalib.automata.UniversalAutomaton
+import net.automatalib.automata.fsa.MutableNFA
 import net.automatalib.automata.fsa.impl.compact.CompactNFA
 
-interface NonDetLTS<S, I> : UniversalAutomaton<S, I, S, Boolean, Void> {
-    val errorState: S
+interface NonDetLTS<S, I> : LTS<S, I, S>
+//interface MutableNonDetLTS<S, I> : NonDetLTS<S, I>, MutableNFA<S, I>
 
-    fun isErrorState(state: S): Boolean
-}
-
-interface MutableNonDetLTS<S, I> : NonDetLTS<S, I>, MutableAutomaton<S, I, S, Boolean, Void>
-
-class CompactNonDetLTS<I>(nfa: CompactNFA<I>) : CompactNFA<I>(nfa), MutableNonDetLTS<Int, I> {
+class CompactNonDetLTS<I>(nfa: CompactNFA<I>) : CompactNFA<I>(nfa), NonDetLTS<Int, I>{
     private val _errorState: Int
+    private val initialState: Int
 
     init {
         // Check that there should be at most one error state, that is marked as unacceptable.
@@ -26,12 +23,23 @@ class CompactNonDetLTS<I>(nfa: CompactNFA<I>) : CompactNFA<I>(nfa), MutableNonDe
             unacceptable[0]
     }
 
+    init {
+        if(initialStates.size > 1 || initialStates.size == 0)
+            throw Error("There should be one and only one initial state in LTS")
+        initialState = initialStates.elementAt(0)
+    }
+
     override val errorState: Int
         get() = _errorState
 
     override fun isErrorState(state: Int): Boolean {
         return !isAccepting(state)
     }
+
+    override fun getInitialState(): Int {
+        return initialState
+    }
+
 }
 
 fun <I> CompactNFA<I>.asLTS(): CompactNonDetLTS<I> {

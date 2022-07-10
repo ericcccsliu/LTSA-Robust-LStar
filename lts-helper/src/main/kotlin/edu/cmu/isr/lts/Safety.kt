@@ -20,7 +20,7 @@ class SafetyResult<I> {
   }
 }
 
-class SafetyVisitor<S, I, T>(private val lts: DetLTS<S, I, T>,
+class SafetyVisitor<S, I, T>(private val lts: LTS<S, I, T>,
                              private val result: SafetyResult<I>) : TSTraversalVisitor<S, I, T, List<I>> {
   private val visited = mutableSetOf<S>()
 
@@ -57,7 +57,7 @@ class SafetyVisitor<S, I, T>(private val lts: DetLTS<S, I, T>,
 
 }
 
-fun <I> checkSafety(lts: DetLTS<*, I, *>, inputs1: Alphabet<I>,
+fun <I> checkSafety(lts: LTS<*, I, *>, inputs1: Alphabet<I>,
                     prop: DetLTS<*, I, *>, inputs2: Alphabet<I>): SafetyResult<I>
 {
   val c = parallelComposition(lts, inputs1, prop, inputs2)
