@@ -78,12 +78,20 @@ class LTSParallelComposition<S1, S2, I, T1, T2, A1, A2>(
       val s2 = state.second
 
       val t1s: Collection<T1> = if(inputs1.containsSymbol(input)){
-        ts1.getTransitions(s1, input)
+        try {
+          ts1.getTransitions(s1, input)
+        } catch(e: java.lang.IllegalArgumentException) {
+          Collections.emptySet()
+        }
       } else {
         Collections.emptySet()
       }
       val t2s: Collection<T2> =if(inputs2.containsSymbol(input)){
-        ts2.getTransitions(s2, input)
+        try {
+          ts2.getTransitions(s2, input)
+        } catch(e: java.lang.IllegalArgumentException) {
+          Collections.emptySet()
+        }
       } else {
         Collections.emptySet()
       }

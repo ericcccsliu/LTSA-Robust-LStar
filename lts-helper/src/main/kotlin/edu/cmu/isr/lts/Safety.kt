@@ -3,7 +3,6 @@ package edu.cmu.isr.lts
 import net.automatalib.commons.util.Holder
 import net.automatalib.serialization.aut.AUTWriter
 import net.automatalib.util.automata.builders.AutomatonBuilders
-import net.automatalib.util.traversal.VisitedState
 import net.automatalib.util.ts.traversal.TSTraversal
 import net.automatalib.util.ts.traversal.TSTraversalAction
 import net.automatalib.util.ts.traversal.TSTraversalVisitor
@@ -58,12 +57,12 @@ class SafetyVisitor<S, I, T>(private val lts: LTS<S, I, T>,
 }
 
 fun <I> checkSafety(lts: LTS<*, I, *>, inputs1: Alphabet<I>,
-                    prop: LTS<*, I, *>, inputs2: Alphabet<I>): SafetyResult<I>
+                    prop: DetLTS<*, I, *>, inputs2: Alphabet<I>): SafetyResult<I>
 {
-  val c = parallelComposition(lts, inputs1, prop, inputs2)
+  val composition = parallelComposition(lts, inputs1, prop, inputs2)
   val result = SafetyResult<I>()
-  val vis = SafetyVisitor(c, result)
-  TSTraversal.breadthFirst(c, c.inputAlphabet, vis)
+  val vis = SafetyVisitor(composition, result)
+  TSTraversal.breadthFirst(composition, composition.inputAlphabet, vis)
   return result
 }
 
@@ -101,8 +100,8 @@ fun main() {
 
   AUTWriter.writeAutomaton(p, p.inputAlphabet, System.out)
 
-  val p_err = makeErrorState(p, p.inputAlphabet)
-  AUTWriter.writeAutomaton(p_err, p.inputAlphabet, System.out)
+  val pErr = makeErrorState(p, p.inputAlphabet)
+  AUTWriter.writeAutomaton(pErr, p.inputAlphabet, System.out)
 
-  println(checkSafety(a, a.inputAlphabet, p_err, p.inputAlphabet))
+  println(checkSafety(a, a.inputAlphabet, pErr, p.inputAlphabet))
 }

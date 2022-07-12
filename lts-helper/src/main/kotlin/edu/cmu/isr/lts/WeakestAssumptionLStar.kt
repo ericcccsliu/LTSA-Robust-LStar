@@ -25,10 +25,10 @@ import java.util.*
 
 //use alphabet of property union alphabet of machine
 class WeakestAssumptionLStar<I>(
-    learningTarget: CompactNonDetLTS<I>, alphabet: Alphabet<I>, system: CompactNonDetLTS<I>,
+    learningTarget: CompactNonDetLTS<I>, learningAlphabet: Alphabet<I>, system: CompactNonDetLTS<I>,
     initialSuffixes: List<Word<I>>, cexHandler: ObservationTableCEXHandler<Any?, Any?>, closingStrategy: ClosingStrategy<Any?, Any?> //any bad practice
 )
-        : ExtensibleLStarDFA<I> (alphabet, WeakestMembershipOracle<I>(learningTarget, system), initialSuffixes, cexHandler, closingStrategy) {
+        : ExtensibleLStarDFA<I> (learningAlphabet, WeakestMembershipOracle<I>(learningTarget, learningAlphabet), initialSuffixes, cexHandler, closingStrategy) {
             constructor(learningTarget: CompactNonDetLTS<I>, system: CompactNonDetLTS<I>, alphabet: Alphabet<I>) :
                 this(learningTarget, alphabet, system, Collections.emptyList(), ObservationTableCEXHandlers.CLASSIC_LSTAR, ClosingStrategies.CLOSE_FIRST)
 }
@@ -77,7 +77,7 @@ class Experiment (sysPath: String, propertyPath: String, envPath: String) {
     val result: CompactDFA<String>
         get() {
             val experiment =
-                DFAExperiment(lStarAlgorithm, WeakestEquivalenceOracle(sysLTS, propertyLTS), learningAlphabet)
+                DFAExperiment(lStarAlgorithm, WeakestEquivalenceOracle(targetNFA, learningAlphabet, tauAlphabet), learningAlphabet)
             experiment.run()
             return experiment.finalHypothesis as CompactDFA<String>
         }
@@ -174,8 +174,6 @@ fun DrawAutomaton(automaton: CompactDFA<String>) {
 
 //time to break things :)
 fun main() {
-//    val abpSysDFA : CompactDFA<String> = AUTtoDFA<String>("/testfiles/ABP_SYS.aut").getDFA()
-//    val abpPropertyDFA : CompactDFA<String> = AUTtoDFA<String>("/testfiles/ABP_PROPERTY.aut").getDFA(true)
-//    val lStarAlgorithm = WeakestAssumptionLStar(abpSysDFA, abpPropertyDFA, abpSysDFA.inputAlphabet)
-//
+    val result = Experiment("/testfiles/ABP_SYS.aut", "/testfiles/ABP_PROPERTY.aut", "/testfiles/ABP_ENV.aut").result
+    DrawAutomaton(result)
 }
