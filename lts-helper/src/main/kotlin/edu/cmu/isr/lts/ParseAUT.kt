@@ -9,6 +9,9 @@ import net.automatalib.serialization.aut.AUTParser
 import net.automatalib.util.automata.Automata
 import net.automatalib.util.automata.builders.AutomatonBuilders
 import net.automatalib.util.automata.fsa.NFAs
+import net.automatalib.util.ts.copy.TSCopy
+import net.automatalib.util.ts.traversal.TSTraversal
+import net.automatalib.util.ts.traversal.TSTraversalMethod
 import net.automatalib.words.impl.Alphabets
 
 //NOTE: make sink/error state the last state
@@ -29,10 +32,14 @@ class AUTtoDFA<I>(fin: String) {
     fun getDFA(isProperty: Boolean = false): CompactDFA<I> {
         //partial, minimize parameters determined by trial & error :/
         val dfa = NFAs.determinize(nfa, nfa.inputAlphabet, true, false)
-        //error state is the only state that is not accepting
+        //Assume error state is the only sink state
+        //@TODO: make sure this assumption is valid
         if(isProperty) {
-            val lastState: Int = dfa.states.elementAt(dfa.states.size - 1)
-            dfa.setAccepting(lastState, false)
+            for(state in dfa){
+                if(dfa.getTransitions(state).isEmpty()) {
+                    dfa.setAccepting(state, false)
+                }
+            }
         }
         return dfa;
     }

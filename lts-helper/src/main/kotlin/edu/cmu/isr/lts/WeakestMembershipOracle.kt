@@ -25,8 +25,9 @@ class WeakestMembershipOracle<I>(private val learningTarget: CompactNonDetLTS<I>
     }
 
     private fun checkMembership(trace: Word<I>): Boolean{
-        println(trace.toString())
+        print(trace.toString() + " result:")
         if(trace.isEmpty){
+            println(" true")
             return true
         }
 
@@ -47,8 +48,10 @@ class WeakestMembershipOracle<I>(private val learningTarget: CompactNonDetLTS<I>
 
         val composition = parallelComposition(traceLTS, learningAlphabet, learningTarget, learningTarget.inputAlphabet)
         if(isErrorReachable(composition, learningTarget.inputAlphabet)){
+            println(" false")
             return false
         }
+        println(" true")
         return true
     }
 

@@ -6,6 +6,7 @@ import de.learnlib.algorithms.lstar.closing.ClosingStrategies
 import de.learnlib.algorithms.lstar.closing.ClosingStrategy
 import de.learnlib.algorithms.lstar.dfa.ExtensibleLStarDFA
 import de.learnlib.util.Experiment.DFAExperiment
+import net.automatalib.automata.Automaton
 import net.automatalib.automata.fsa.impl.compact.CompactDFA
 import net.automatalib.automata.fsa.impl.compact.CompactNFA
 import net.automatalib.commons.util.IOUtil
@@ -46,7 +47,19 @@ class Experiment (sysPath: String, propertyPath: String, envPath: String) {
 
     private val sysLTS: CompactNonDetLTS<String> = CompactNonDetLTS(sysNFA)
     private val propertyLTS: CompactDetLTS<String> = CompactDetLTS(propertyDFA)
+    init {
+        println("Property error state: " + propertyLTS.errorState)
+    }
+
     val composition = parallelComposition(sysLTS, sysLTS.inputAlphabet, propertyLTS, propertyLTS.inputAlphabet)
+    init {
+        DrawCompactLTS(sysLTS, sysLTS.inputAlphabet, "sysLTS")
+        DrawCompactLTS(propertyLTS, propertyLTS.inputAlphabet, "propertyLTS")
+        DrawAutomaton(composition, composition.inputAlphabet, "composition")
+        println("composition error state: " + composition.errorState)
+        println("sys input alphabet: " + sysLTS.inputAlphabet.toString())
+        println("property input alphabet" + propertyLTS.inputAlphabet.toString())
+    }
 
     //maps end state to map of transition, initial state
     private val backtrackingMap = HashMap<Int, HashMap<String, Int>>()
@@ -71,6 +84,11 @@ class Experiment (sysPath: String, propertyPath: String, envPath: String) {
     }
 
     private val targetNFA = pruneErrorState(composition)
+
+    init {
+        DrawCompactLTS(targetNFA, targetNFA.inputAlphabet, "target")
+        println("target error state: " + targetNFA.errorState)
+    }
 
     private val lStarAlgorithm = WeakestAssumptionLStar(targetNFA, sysLTS, learningAlphabet)
 
@@ -156,15 +174,19 @@ private class InvalidVisualizationHelper<N, E> : VisualizationHelper<N, E> {
         return true
     }
 }
-fun DrawAutomaton(automaton: CompactDFA<String>) {
-    val dotFile = File("automaton.dot")
-    val dotOutputFile = File("automaton-as-png.png")
+fun <I> DrawCompactLTS(LTS: LTS<Int, I, Int>, alphabet: Alphabet<I>, name: String) {
+    DrawAutomaton(LTS, alphabet, name)
+}
+
+fun <S, I, T> DrawAutomaton(automaton: Automaton<S, I, T>, alphabet: Alphabet<I>, name: String) {
+    val dotFile = File("dot/$name.dot")
+    val dotOutputFile = File("visualizations/$name-as-png.png")
     dotFile.createNewFile()
     dotOutputFile.createNewFile()
 
     GraphDOT.write(
         automaton,
-        automaton.inputAlphabet,
+        alphabet,
         IOUtil.asBufferedUTF8Writer(dotFile),
         InvalidVisualizationHelper()
     )
@@ -174,6 +196,9 @@ fun DrawAutomaton(automaton: CompactDFA<String>) {
 
 //time to break things :)
 fun main() {
-    val result = Experiment("/testfiles/ABP_SYS.aut", "/testfiles/ABP_PROPERTY.aut", "/testfiles/ABP_ENV.aut").result
-    DrawAutomaton(result)
+    println("starting...")
+
+    val result = Experiment("/testfiles/coffee_sys.aut", "/testfiles/coffee_property.aut", "/testfiles/coffee_env.aut").result
+    println("finished!")
+    DrawCompactLTS(CompactDetLTS(result), result.inputAlphabet, "result")
 }

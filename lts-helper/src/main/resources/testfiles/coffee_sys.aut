@@ -1,0 +1,8 @@
+des(0,7,4)
+(0,hPressBrew,2)
+(0,hLiftHandle,1)
+(1,hLowerHandle,0)
+(1,hPressBrew,1)
+(2,mBrew,3)
+(3,mBrew,3)
+(3,mBrewDone,0)

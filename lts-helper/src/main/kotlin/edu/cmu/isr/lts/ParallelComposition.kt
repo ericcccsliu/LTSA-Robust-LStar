@@ -77,34 +77,37 @@ class LTSParallelComposition<S1, S2, I, T1, T2, A1, A2>(
       val s1 = state.first
       val s2 = state.second
 
-      val t1s: Collection<T1> = if(inputs1.containsSymbol(input)){
+      val t1s: Collection<T1>? = if(inputs1.containsSymbol(input)){
         try {
           ts1.getTransitions(s1, input)
         } catch(e: java.lang.IllegalArgumentException) {
           Collections.emptySet()
         }
       } else {
-        Collections.emptySet()
+         null
       }
-      val t2s: Collection<T2> =if(inputs2.containsSymbol(input)){
+      val t2s: Collection<T2>? =if(inputs2.containsSymbol(input)){
         try {
           ts2.getTransitions(s2, input)
         } catch(e: java.lang.IllegalArgumentException) {
           Collections.emptySet()
         }
       } else {
-        Collections.emptySet()
+        null
+      }
+      if (!t1s.isNullOrEmpty() && !t2s.isNullOrEmpty()) {
+        t1s.forEach { t1 -> t2s.forEach { t2 -> transitions.add(Pair(TransOrLoop(s1, t1), TransOrLoop(s2, t2))) } }
+        return transitions
+      } else if (!t1s.isNullOrEmpty() && t2s == null) {
+        t1s.forEach { t1 -> transitions.add(Pair(TransOrLoop(s1, t1), TransOrLoop(s2, null))) }
+        return transitions
+      } else if (!t2s.isNullOrEmpty() && t1s == null) {
+        t2s.forEach { t2 -> transitions.add(Pair(TransOrLoop(s1, null), TransOrLoop(s2, t2))) }
+        return transitions
       }
 
-      if(!t1s.isEmpty() && !t2s.isEmpty()){
-        t1s.forEach{t1 -> t2s.forEach{t2 -> transitions.add(Pair(TransOrLoop(s1, t1), TransOrLoop(s2, t2)))}}
-      } else if (!t1s.isEmpty()) {
-        t1s.forEach{t1 -> transitions.add(Pair(TransOrLoop(s1, t1), TransOrLoop(s2, null)))}
-      } else if (!t2s.isEmpty()) {
-        t2s.forEach{t2 -> transitions.add(Pair(TransOrLoop(s1, null), TransOrLoop(s2, t2)))}
-      }
 
-      return transitions
+      return Collections.emptySet()
   }
 }
 
