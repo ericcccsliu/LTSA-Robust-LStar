@@ -11,6 +11,7 @@ import net.automatalib.automata.fsa.impl.compact.CompactDFA
 import net.automatalib.automata.fsa.impl.compact.CompactNFA
 import net.automatalib.commons.util.IOUtil
 import net.automatalib.serialization.dot.GraphDOT
+import net.automatalib.util.automata.predicates.TransitionPredicates
 import net.automatalib.util.ts.copy.TSCopy
 import net.automatalib.util.ts.traversal.TSTraversal
 import net.automatalib.util.ts.traversal.TSTraversalMethod
@@ -128,14 +129,14 @@ class Experiment (sysPath: String, propertyPath: String, envPath: String) {
 
         //condense error states by constructing CompactNonDetLTS
         val prunedNFA = CompactNFA<String>(composition.inputAlphabet)
-        TSCopy.copy(TSTraversalMethod.BREADTH_FIRST, composition, TSTraversal.NO_LIMIT, composition.inputAlphabet, prunedNFA)
+        TSCopy.copy(TSTraversalMethod.BREADTH_FIRST, composition, TSTraversal.NO_LIMIT, composition.inputAlphabet, prunedNFA, {!errorStates.contains(it) || it == initialErrorState}, TransitionPredicates.alwaysTrue())
         for(state in errorStates) {
-            //ignore initial error state because everything else condenses into it
-            if(state == initialErrorState) {
-                continue
-            }
-            //@TODO: remove state??? rn just removing all the transitions from it—does that do the same thing???? idk
-            prunedNFA.removeAllTransitions(state)
+//            //ignore initial error state because everything else condenses into it
+//            if(state == initialErrorState) {
+//                continue
+//            }
+//            //@TODO: remove state??? rn just removing all the transitions from it—does that do the same thing???? idk
+//            prunedNFA.removeAllTransitions(state)
             val incomingTransitions = backtrackingMap[state]
             incomingTransitions?.forEach {
                 prunedNFA.addTransition(it.value, it.key, initialErrorState)
@@ -198,7 +199,7 @@ fun <S, I, T> DrawAutomaton(automaton: Automaton<S, I, T>, alphabet: Alphabet<I>
 fun main() {
     println("starting...")
 
-    val result = Experiment("/testfiles/coffee_sys.aut", "/testfiles/coffee_property.aut", "/testfiles/coffee_env.aut").result
+    val result = Experiment("/testfiles/ABP_SYS.aut", "/testfiles/ABP_PROPERTY.aut", "/testfiles/ABP_ENV.aut").result
     println("finished!")
     DrawCompactLTS(CompactDetLTS(result), result.inputAlphabet, "result")
 }
