@@ -1,7 +1,11 @@
-package edu.cmu.isr.lts
+package edu.cmu.isr.lts.oracles
 
 import de.learnlib.api.oracle.MembershipOracle
 import de.learnlib.api.query.Query
+import edu.cmu.isr.lts.LTS.CompactDetLTS
+import edu.cmu.isr.lts.LTS.CompactNonDetLTS
+import edu.cmu.isr.lts.LTS.LTS
+import edu.cmu.isr.lts.parallelComposition
 import net.automatalib.commons.util.Holder
 import net.automatalib.util.automata.builders.AutomatonBuilders
 import net.automatalib.util.ts.traversal.TSTraversal
@@ -25,7 +29,7 @@ class WeakestMembershipOracle<I>(private val learningTarget: CompactNonDetLTS<I>
     }
 
     private fun checkMembership(trace: Word<I>): Boolean{
-        print(trace.toString() + " result:")
+        print("$trace result:")
         if(trace.isEmpty){
             println(" true")
             return true

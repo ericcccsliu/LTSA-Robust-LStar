@@ -1,4 +1,4 @@
-package edu.cmu.isr.lts
+package edu.cmu.isr.lts.LTS
 
 import net.automatalib.automata.MutableDeterministic
 import net.automatalib.automata.fsa.impl.compact.CompactDFA

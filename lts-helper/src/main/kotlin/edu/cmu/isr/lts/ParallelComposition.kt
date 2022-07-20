@@ -1,5 +1,8 @@
 package edu.cmu.isr.lts
 
+import edu.cmu.isr.lts.LTS.CompactDetLTS
+import edu.cmu.isr.lts.LTS.CompactNonDetLTS
+import edu.cmu.isr.lts.LTS.LTS
 import net.automatalib.automata.fsa.impl.compact.CompactNFA
 import net.automatalib.serialization.aut.AUTWriter
 import net.automatalib.util.automata.builders.AutomatonBuilders

@@ -1,14 +1,11 @@
-package edu.cmu.isr.lts
+package edu.cmu.isr.lts.LTS
 
-import net.automatalib.automata.MutableAutomaton
-import net.automatalib.automata.UniversalAutomaton
-import net.automatalib.automata.fsa.MutableNFA
 import net.automatalib.automata.fsa.impl.compact.CompactNFA
 
 interface NonDetLTS<S, I> : LTS<S, I, S>
 //interface MutableNonDetLTS<S, I> : NonDetLTS<S, I>, MutableNFA<S, I>
 
-class CompactNonDetLTS<I>(nfa: CompactNFA<I>) : CompactNFA<I>(nfa), NonDetLTS<Int, I>{
+class CompactNonDetLTS<I>(nfa: CompactNFA<I>) : CompactNFA<I>(nfa), NonDetLTS<Int, I> {
     private val _errorState: Int
     private val initialState: Int
 

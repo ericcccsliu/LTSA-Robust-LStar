@@ -1,5 +1,9 @@
 package edu.cmu.isr.lts
 
+import edu.cmu.isr.lts.LTS.CompactDetLTS
+import edu.cmu.isr.lts.LTS.DetLTS
+import edu.cmu.isr.lts.LTS.LTS
+import edu.cmu.isr.lts.LTS.MutableDetLTS
 import net.automatalib.commons.util.Holder
 import net.automatalib.serialization.aut.AUTWriter
 import net.automatalib.util.automata.builders.AutomatonBuilders

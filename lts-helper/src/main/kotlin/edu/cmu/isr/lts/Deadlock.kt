@@ -1,13 +1,11 @@
 package edu.cmu.isr.lts
 
+import edu.cmu.isr.lts.LTS.DetLTS
 import net.automatalib.commons.util.Holder
-import net.automatalib.serialization.aut.AUTWriter
-import net.automatalib.util.automata.builders.AutomatonBuilders
 import net.automatalib.util.ts.traversal.TSTraversal
 import net.automatalib.util.ts.traversal.TSTraversalAction
 import net.automatalib.util.ts.traversal.TSTraversalVisitor
 import net.automatalib.words.Alphabet
-import net.automatalib.words.impl.Alphabets
 
 //@TODO: Refactor for nondeterminism
 class DeadlockResult<I> {
