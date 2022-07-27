@@ -4,6 +4,7 @@ import edu.cmu.isr.lts.LTS.CompactDetLTS
 import edu.cmu.isr.lts.LTS.DetLTS
 import edu.cmu.isr.lts.LTS.LTS
 import edu.cmu.isr.lts.LTS.MutableDetLTS
+import net.automatalib.automata.fsa.impl.compact.CompactDFA
 import net.automatalib.commons.util.Holder
 import net.automatalib.serialization.aut.AUTWriter
 import net.automatalib.util.automata.builders.AutomatonBuilders
@@ -11,6 +12,7 @@ import net.automatalib.util.ts.traversal.TSTraversal
 import net.automatalib.util.ts.traversal.TSTraversalAction
 import net.automatalib.util.ts.traversal.TSTraversalVisitor
 import net.automatalib.words.Alphabet
+import net.automatalib.words.Word
 import net.automatalib.words.impl.Alphabets
 
 
@@ -24,7 +26,7 @@ class SafetyResult<I> {
 }
 
 class SafetyVisitor<S, I, T>(private val lts: LTS<S, I, T>,
-                             private val result: SafetyResult<I>) : TSTraversalVisitor<S, I, T, List<I>> {
+                             private val result: SafetyResult<I>, private val tauAlphabet: Alphabet<I>? = null, private val observations: HashMap<Word<I>, Boolean>? = null) : TSTraversalVisitor<S, I, T, List<I>> {
   private val visited = mutableSetOf<S>()
 
   override fun processInitial(state: S, outData: Holder<List<I>>?): TSTraversalAction {
@@ -50,6 +52,10 @@ class SafetyVisitor<S, I, T>(private val lts: LTS<S, I, T>,
     outData: Holder<List<I>>?
   ): TSTraversalAction {
     outData!!.value = srcData!! + listOf(input)
+    if(observations?.get(Word.fromList(outData.value.filter{tauAlphabet != null && !tauAlphabet.contains(it) })) == false) {
+//      println("ignored queries: " + outData.value.filter{tauAlphabet != null && !tauAlphabet.contains(it)})
+      return TSTraversalAction.IGNORE
+    }
     if (lts.isErrorState(succ)) {
       result.violation = true
       result.trace = outData.value
@@ -61,11 +67,11 @@ class SafetyVisitor<S, I, T>(private val lts: LTS<S, I, T>,
 }
 
 fun <I> checkSafety(lts: LTS<*, I, *>, inputs1: Alphabet<I>,
-                    prop: DetLTS<*, I, *>, inputs2: Alphabet<I>): SafetyResult<I>
+                    prop: DetLTS<*, I, *>, inputs2: Alphabet<I>, tauAlphabet: Alphabet<I>? = null, observations: HashMap<Word<I>, Boolean>? = null): SafetyResult<I>
 {
   val composition = parallelComposition(lts, inputs1, prop, inputs2)
   val result = SafetyResult<I>()
-  val vis = SafetyVisitor(composition, result)
+  val vis = if(observations != null && tauAlphabet != null) { SafetyVisitor(composition, result, tauAlphabet, observations)} else {  SafetyVisitor(composition, result) }
   TSTraversal.breadthFirst(composition, composition.inputAlphabet, vis)
   return result
 }

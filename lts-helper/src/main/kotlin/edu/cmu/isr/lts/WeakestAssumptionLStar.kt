@@ -17,13 +17,11 @@ import net.automatalib.words.Word
 import net.automatalib.words.impl.Alphabets
 import java.util.*
 
-
-//use alphabet of property union alphabet of machine
 class WeakestAssumptionLStar<I>(
-    learningTarget: CompactNonDetLTS<I>, learningAlphabet: Alphabet<I>, system: CompactNonDetLTS<I>,
+    learningTarget: CompactNonDetLTS<I>, learningAlphabet: Alphabet<I>, system: CompactNonDetLTS<I>, membershipOracle: WeakestMembershipOracle<I>,
     initialSuffixes: List<Word<I>>, cexHandler: ObservationTableCEXHandler<Any?, Any?>, closingStrategy: ClosingStrategy<Any?, Any?> //any bad practice
 )
-        : ExtensibleLStarDFA<I> (learningAlphabet, WeakestMembershipOracle<I>(learningTarget, learningAlphabet), initialSuffixes, cexHandler, closingStrategy) {
-            constructor(learningTarget: CompactNonDetLTS<I>, system: CompactNonDetLTS<I>, alphabet: Alphabet<I>) :
-                this(learningTarget, alphabet, system, Collections.emptyList(), ObservationTableCEXHandlers.CLASSIC_LSTAR, ClosingStrategies.CLOSE_FIRST)
+        : ExtensibleLStarDFA<I> (learningAlphabet, membershipOracle, initialSuffixes, cexHandler, closingStrategy) {
+            constructor(learningTarget: CompactNonDetLTS<I>, system: CompactNonDetLTS<I>, alphabet: Alphabet<I>, membershipOracle: WeakestMembershipOracle<I>) :
+                this(learningTarget, alphabet, system, membershipOracle, Collections.emptyList(), ObservationTableCEXHandlers.CLASSIC_LSTAR, ClosingStrategies.CLOSE_FIRST)
 }

@@ -15,6 +15,7 @@ import net.automatalib.words.Alphabet
 import net.automatalib.words.Word
 
 class WeakestMembershipOracle<I>(private val learningTarget: CompactNonDetLTS<I>, private val learningAlphabet: Alphabet<I>) : MembershipOracle.DFAMembershipOracle<I> {
+    val observations = HashMap<Word<I>, Boolean>()
     override fun processQueries(p0: MutableCollection<out Query<I, Boolean>>?) {
         if (p0 != null) {
             for(query: Query<I, Boolean> in p0) {
@@ -29,9 +30,10 @@ class WeakestMembershipOracle<I>(private val learningTarget: CompactNonDetLTS<I>
     }
 
     private fun checkMembership(trace: Word<I>): Boolean{
-        print("$trace result:")
+//        print("$trace result:")
         if(trace.isEmpty){
-            println(" true")
+            observations[trace] = true
+//            println(" true")
             return true
         }
 
@@ -52,10 +54,12 @@ class WeakestMembershipOracle<I>(private val learningTarget: CompactNonDetLTS<I>
 
         val composition = parallelComposition(traceLTS, learningAlphabet, learningTarget, learningTarget.inputAlphabet)
         if(isErrorReachable(composition, learningTarget.inputAlphabet)){
-            println(" false")
+//            println(" false")
+            observations[trace] = false
             return false
         }
-        println(" true")
+//        println(" true")
+        observations[trace] = true
         return true
     }
 

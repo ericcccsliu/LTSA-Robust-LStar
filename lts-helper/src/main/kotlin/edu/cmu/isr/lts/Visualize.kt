@@ -29,7 +29,7 @@ fun <I> DrawCompactLTS(LTS: LTS<Int, I, Int>, alphabet: Alphabet<I>, name: Strin
 
 fun <S, I, T> DrawAutomaton(automaton: Automaton<S, I, T>, alphabet: Alphabet<I>, name: String) {
     val dotFile = File("dot/$name.dot")
-    val dotOutputFile = File("visualizations/$name-as-png.png")
+    val dotOutputFile = File("visualizations/$name.png")
     dotFile.createNewFile()
     dotOutputFile.createNewFile()
 
