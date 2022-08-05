@@ -18,9 +18,9 @@ import java.util.HashSet
 import kotlin.system.measureTimeMillis
 
 class WeakestAssumption (sysPath: String, propertyPath: String, envPath: String) {
-    private val sysNFA : CompactNFA<String> = AUTtoDFA<String>(sysPath).getNFA()
-    private val propertyDFA : CompactDFA<String> = AUTtoDFA<String>(propertyPath).getDFA(true)
-    private val envNFA : CompactNFA<String> = AUTtoDFA<String>(envPath).getNFA()
+    private val sysNFA : CompactNFA<String> = AUTtoAutomaton<String>(sysPath).getNFA()
+    private val propertyDFA : CompactDFA<String> = AUTtoAutomaton<String>(propertyPath).getDFA(true)
+    private val envNFA : CompactNFA<String> = AUTtoAutomaton<String>(envPath).getNFA()
 
     init{
         DrawAutomaton(sysNFA, sysNFA.inputAlphabet, "system")
@@ -40,14 +40,6 @@ class WeakestAssumption (sysPath: String, propertyPath: String, envPath: String)
     val composition = parallelComposition(sysLTS, sysLTS.inputAlphabet, propertyLTS, propertyLTS.inputAlphabet)
 
     private val targetNFA = TauPruning(composition, tauAlphabet).getResult()
-    init {
-        println("tauAlphabet $tauAlphabet")
-        println("assumptionAlphabet $assumptionAlphabet")
-        println("target error state " + targetNFA.errorState)
-//        DrawAutomaton(targetNFA, targetNFA.inputAlphabet, "target")
-
-        //issue in tau pruning???
-    }
     val subsetConstructionTime: Long
     val subsetConstructionResult: CompactDFA<String>
     init {

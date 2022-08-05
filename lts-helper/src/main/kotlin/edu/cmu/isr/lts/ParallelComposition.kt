@@ -73,7 +73,6 @@ class LTSParallelComposition<S1, S2, I, T1, T2, A1, A2>(
     return initialStateSet
   }
 
-  //@TODO: change to getTransitions() function in order to account for nondeterminism
   override fun getTransitions(state: Pair<S1, S2>, input: I): Collection<Pair<TransOrLoop<S1, T1>, TransOrLoop<S2, T2>>> {
       val transitions = ArrayList<Pair<TransOrLoop<S1, T1>, TransOrLoop<S2, T2>>>()
       if(isErrorState(state))

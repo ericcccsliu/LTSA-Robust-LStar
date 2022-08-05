@@ -10,6 +10,7 @@ import net.automatalib.util.ts.traversal.TSTraversal
 import net.automatalib.util.ts.traversal.TSTraversalMethod
 import net.automatalib.words.Alphabet
 
+//implements property extraction step described in "Assumption Generation for Software Component Verification"
 class PropertyExtractionDTS (private val target: CompactNonDetLTS<String>, private val tauAlphabet: Alphabet<String>):
     UniversalDTS<Set<Int>, String, Set<Int>?, Boolean, Void> {
 
@@ -31,11 +32,10 @@ class PropertyExtractionDTS (private val target: CompactNonDetLTS<String>, priva
             nextState.addAll(target.getSuccessors(individualState, input))
         }
         nextState = tauClosure(nextState) as HashSet<Int>
+        //if the set of states contains error, then entire set is error
+        //null is error state //empty set is sink state
         if(nextState.contains(target.errorState)) return null
         return nextState
-        //empty set is sink state
-        //null is error state as error states must be deleted
-
     }
 
     override fun getTransitionProperty(p0: Set<Int>?): Void? {
@@ -44,6 +44,7 @@ class PropertyExtractionDTS (private val target: CompactNonDetLTS<String>, priva
 
     //use to distinguish sink state
     override fun getStateProperty(state: Set<Int>?): Boolean {
+        //null is error state //empty set is sink state
         if(state == null) {
             return false
         }
@@ -87,7 +88,6 @@ fun extractPropertyDFA(target: CompactNonDetLTS<String>, alphabet: Alphabet<Stri
     val propertyDTS = PropertyExtractionDTS(target, tauAlphabet)
     val outputDFA = CompactDFA(alphabet)
 
-    //@TODO: identify sink state in order to add self loops
     TSCopy.copy(TSTraversalMethod.BREADTH_FIRST, propertyDTS, TSTraversal.NO_LIMIT, alphabet, outputDFA)
     return outputDFA
 }
