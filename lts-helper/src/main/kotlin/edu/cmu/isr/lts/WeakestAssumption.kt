@@ -44,7 +44,7 @@ class WeakestAssumption (sysPath: String, propertyPath: String, envPath: String)
         println("tauAlphabet $tauAlphabet")
         println("assumptionAlphabet $assumptionAlphabet")
         println("target error state " + targetNFA.errorState)
-        DrawAutomaton(targetNFA, targetNFA.inputAlphabet, "target")
+//        DrawAutomaton(targetNFA, targetNFA.inputAlphabet, "target")
 
         //issue in tau pruning???
     }
@@ -123,8 +123,8 @@ fun <I> addSinkState(targetNFA: CompactNonDetLTS<I>, learningAlphabet: Alphabet<
 fun main() {
      val experiment = WeakestAssumption("/testfiles/coffee_sys.aut", "/testfiles/coffee_property.aut", "/testfiles/coffee_env.aut")
 //    val experiment = WeakestAssumption("/testfiles/ABP_SYS.aut", "/testfiles/ABP_PROPERTY.aut", "/testfiles/ABP_ENV.aut")
-//    val experiment = WeakestAssumption("/testfiles/1LINE_PUMP_SYS.aut", "/testfiles/1LINE_PUMP_PROPERTY.aut", "/testfiles/1LINE_PUMP_ENV.aut")
-//    val experiment = WeakestAssumption("/testfiles/2LINES_SYS.aut", "/testfiles/2LINES_PROPERTY.aut", "/testfiles/2LINES_ENV.aut")
+//    val experiment = WeakestAssumption("/testfiles/1LINE_PUMP_SYS.aut", "/testfiles/1LINE_PUMP_PROPERTY.aut", "/testfiles/1LINE_PUMP_WACKY_ENV.aut")
+//    val experiment = WeakestAssumption("/testfiles/2LINE_COMPLETE_SYS.aut", "/testfiles/2LINES_PROPERTY.aut", "/testfiles/2LINES_ENV.aut")
     val lStarResult = experiment.lStarResult
     val subsetConstructionResult = experiment.subsetConstructionResult
     DrawAutomaton(lStarResult, lStarResult.inputAlphabet, "LSTAR")

@@ -71,9 +71,9 @@ class TauPruning (val composition: CompactNonDetLTS<String>, private val tauAlph
         println("errorStateSet: " + composition.states.filter{!composition.isAccepting(it)})
         val mapping = TSCopy.copy(TSTraversalMethod.BREADTH_FIRST, composition, TSTraversal.NO_LIMIT, composition.inputAlphabet, prunedNFA, {!errorStates.contains(it) || it == initialErrorState}, TransitionPredicates.alwaysTrue())
 
-        DrawAutomaton(composition, composition.inputAlphabet, "composition" )
+//        DrawAutomaton(composition, composition.inputAlphabet, "composition" )
         println("composition error state: " + composition.errorState)
-        DrawAutomaton(prunedNFA, prunedNFA.inputAlphabet, "prunedNFA")
+//        DrawAutomaton(prunedNFA, prunedNFA.inputAlphabet, "prunedNFA")
 
         val prunedNFALTS = CompactNonDetLTS(prunedNFA)
 
