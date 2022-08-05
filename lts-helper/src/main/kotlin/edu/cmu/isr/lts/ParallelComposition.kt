@@ -17,6 +17,8 @@ import kotlin.collections.ArrayList
 
 class TransOrLoop<S, T>(val loop: S, val trans: T?)
 
+
+//changed to take in two LTS (may be non-deterministic)
 class LTSParallelComposition<S1, S2, I, T1, T2, A1, A2>(
   private val ts1: A1,
   private val inputs1: Alphabet<I>,

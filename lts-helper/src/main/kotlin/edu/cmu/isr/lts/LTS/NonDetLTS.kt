@@ -2,8 +2,8 @@ package edu.cmu.isr.lts.LTS
 
 import net.automatalib.automata.fsa.impl.compact.CompactNFA
 
+//implementation of nondeterministic LTS
 interface NonDetLTS<S, I> : LTS<S, I, S>
-//interface MutableNonDetLTS<S, I> : NonDetLTS<S, I>, MutableNFA<S, I>
 
 class CompactNonDetLTS<I>(nfa: CompactNFA<I>) : CompactNFA<I>(nfa), NonDetLTS<Int, I> {
     private val _errorState: Int

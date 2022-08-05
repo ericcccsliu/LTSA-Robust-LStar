@@ -4,6 +4,7 @@ import net.automatalib.automata.MutableDeterministic
 import net.automatalib.automata.fsa.impl.compact.CompactDFA
 import net.automatalib.ts.UniversalDTS
 
+//Implementation of deterministic LTS—should be equivalent to previous implementation of LTS (which assumed determinism)
 
 interface DetLTS<S, I, T> : LTS<S, I, T>, UniversalDTS<S, I, T, Boolean, Void>
 
